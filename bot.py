@@ -1,100 +1,91 @@
-"""
-Full Grid:
-[
-[['-', '-', '-'], ['-', '-', 'P']],
-[['-', '-', 'P'], ['-', '-', '-']],
-]
-"""
-colours = ['P']
-inboard = [
-    [['-'], ['P']],
-    [['P'], ['-']]
-]
-xboard = [
-    [['-'], ['P'], ['P']],
-    [['P'], ['-'], ['P']],
-    [['P'], ['-'], ['P']]
-]
+import time
+import logging
 
-def solve(bo):
-    seq = []
-    if len(bo[0][0][:]) != 3:
-        bo = convert_board(bo)
-    pos = find_empty(bo)
-    if not pos:
+logging.basicConfig(level=logging.WARNING)
+
+ct = 1
+def solve(board, match, colours, seq):   
+    global ct
+    gridSize = len(match[0])
+    if complete(board, match, seq, gridSize):
         return True
-    row,col,num = pos
-    # Function to get colours goes here
+    logging.debug('Solve Called: ' + str(ct))
+    ct += 1
     for colour in colours:
-        if valid(colour, pos, bo):
-            if num == 2:
-                bo[row][col][1] == colour
-                if solve(bo):
-                    return True
-                # bo[row][col][1] == '-'
-            else:
-                bo[row][col][0] == colour
-                if solve(bo):
-                    return True
-                bo[row][col][0] == '-'
+        for i in range(gridSize*2):
+            if valid(match, i, colour, seq):
+                group = (i,colour)
+                seq.append(group)
+                newboard = makeMove(board, i, colour)
+                # time.sleep(1)
+                if solve(newboard, match, colours, seq):
+                    return seq
+                seq.remove(group)
+                newboard = board
 
-            # Might need to replace bottom colour as well.
-            # bo[row][col][0] == '-'
+def complete(board, match, seq, gridSize):
+    if board == match and len(seq) == gridSize * 2:  # sequence found
+        return True
+    else:
+        for x in range(len(match)):
+            for i in range(len(match)):
+                if match[x][i] != board[x][i]:
+                    if match[x][i] == '-':
+                        pass
+                    else:
+                        return False
 
-    return False
-    
+        if len(seq) == gridSize * 2:
+            return True
+        return False
 
-def valid(choice, pos, bo):
-    row,col,num = pos
-    if num == 1:
-        # choice not match bottom colour
-        if choice != bo[row][col][2]:
-            # bottom colour is None
-            if bo[row][col][2] == '-':
-                return True
+def makeMove(board, move, colour):
+    # Finds axis and inserts colour
+    gridSize = len(board[0])
+    if move >= gridSize:
+        move -= gridSize
+        for i in range(gridSize):
+            board[i][move] = colour
+    else:
+        for i in range(gridSize):
+            board[move][i] = colour
+    return board
+
+def valid(match, move, choice, seq):
+    for i in range(len(seq)):               # Button already pressed
+        if move == seq[i][0]:
             return False
     return True
-    
-def convert_board(bo):
-    newbo = []
-    for x in range(len(bo)):
-        row = []
-        for y in range(len(bo[x])):
-            row.append(['-','-',bo[x][y][0]])
-        newbo.append(row)
-    return newbo
+    # gridSize = len(match[0])
+    # # if move > gridSize*2 or move < 0:     # Out of Range
+    # #     print('Choice out of range')
+    # #     return False
+    # if move >= gridSize:                    # Vertical
+    #     move -= gridSize
+    #     for i in range(gridSize):
+    #         if match[i][move] == '-':
+    #             return True
+    #         return choice == match[i][move]
+    # else:                                   # Horizontal
+    #     for i in range(gridSize):
+    #         if choice != match[move][i]:
+    #             if match[move][i] == '-':
+    #                 return True
+    #         return choice == match[move][i]
 
-def print_board(bo):
-    # rows =    bo[0]
-    # choices = bo[0][0]
-    # letters = bo[0][0][0]
-    if len(bo[0][0][:]) != 3:
-        bo = convert_board(bo)
-    gs = len(bo[0])
+def printBoard(board):
+    gridSize = len(board[0])
     print('\n')
-    for i in range(len(bo[0])):
-        for j in range(len(bo[i])):
-            if j == gs:
-                print(bo[i][j])
+    for i in range(gridSize):
+        for j in range(len(board[i])):
+            if j == gridSize:
+                print(board[i][j])
             else:
-                print(str(bo[i][j]) + ' ', end='')
+                print(str(board[i][j]) + ' ', end='')
         print('')
     print('\n')
 
-def find_empty(bo):
-    for row in range(len(bo[0])):
-        for col in range(len(bo[row])):
-            if bo[row][col][0] == '-':
-                if bo[row][col][1] == '-':
-                    return (row,col,2)
-                return (row,col,1)
 
-
-x = [[['P', 'P', 'P'], ['P', 'P', 'P']], [['P', 'P', 'P'], ['X', '-', '-']]]
-y = [[['X', '-', '-'], ['X', '-', 'P'], ['X', '-', 'P']], [['-', 'X', 'P'], ['X', '-', '-'], ['X', '-', 'P']], [['-', '-', 'P'], ['-', '-', '-'], ['-', '-', 'P']]]
-
-
-print_board(inboard)
-solve(inboard)
-print('--------------')
-print_board(inboard)
+inb = [['-', '-'], ['-', '-']]
+mat = [['W', 'O'], ['-', 'B']]
+col = ['W', 'O', 'B']
